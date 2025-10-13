@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  role               Role     @default(USER)
+  level              Int      @default(0)
+  hivePoints         Int      @default(0) // stored as points (1 USD = 100 points)
+  referralPayouts    Int      @default(0) // number of referral payouts already granted (groups of 5)
+  overrideUnlock     Boolean  @default(false) // admin override for level 0 cap
+  suspended          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  tasks              Task[]   @relation("userTasks")
+  proofs             Proof[]  @relation("userProofs")
+  referralsGiven     Referral[] @relation("referrer")
+  referralsReceived  Referral[] @relation("referee")
+  transactions       Transaction[]
+  upgradeRequests    UpgradeRequest[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  reward      Int      // in HivePoints
+  proofType   ProofType
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   String?
+  creator     User?    @relation("userTasks", fields: [creatorId], references: [id])
+  proofs      Proof[]
+}
+
+model Proof {
+  id        String   @id @default(cuid())
+  user      User     @relation("userProofs", fields: [userId], references: [id])
+  userId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  taskId    String
+  type      ProofType
+  url       String
+  status    ProofStatus @default(PENDING)
+  adminNote String?
+  createdAt DateTime @default(now())
+  reviewedAt DateTime?
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  amount    Int // in HivePoints (positive for credit, negative for debit)
+  kind      TransactionKind
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model Level {
+  id         String  @id @default(cuid())
+  name       String  @unique
+  costUsd    Int
+  multiplier Float
+}
+
+model UpgradeRequest {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  targetLevel   Int
+  walletAddress String
+  receiptUrl    String
+  status        UpgradeStatus @default(PENDING)
+  adminNote     String?
+  createdAt     DateTime    @default(now())
+  reviewedAt    DateTime?
+}
+
+model AdsterraRevenue {
+  id         String   @id @default(cuid())
+  date       DateTime
+  amountUsd  Float
+  raw        Json?
+  distributions RevenueDistribution[]
+  createdAt  DateTime @default(now())
+}
+
+model RevenueDistribution {
+  id               String  @id @default(cuid())
+  revenue          AdsterraRevenue @relation(fields: [revenueId], references: [id])
+  revenueId        String
+  level            Int
+  shareUsd         Float
+  creditedPoints   Int
+}
+
+model Referral {
+  id         String @id @default(cuid())
+  referrer   User   @relation("referrer", fields: [referrerId], references: [id])
+  referrerId String
+  referee    User   @relation("referee", fields: [refereeId], references: [id])
+  refereeId  String
+  level      Int
+  createdAt  DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ProofType {
+  IMAGE
+  LINK
+}
+
+enum ProofStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionKind {
+  TASK_REWARD
+  WITHDRAWAL
+  ADMIN_ADJUST
+  UPGRADE_PURCHASE
+}
+
+enum UpgradeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

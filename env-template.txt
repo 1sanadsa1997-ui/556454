@@ -1,0 +1,262 @@
+# PromoHive Environment Variables - Complete Configuration
+# Copy this file to .env.local and fill in your actual values
+
+# ===========================================
+# DATABASE CONFIGURATION
+# ===========================================
+DATABASE_URL=postgresql://neondb_owner:npg_Fjlfx4Y9qXvr@ep-orange-frost-adaw8b8m-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DB_HOST=ep-orange-frost-adaw8b8m-pooler.c-2.us-east-1.aws.neon.tech
+DB_PORT=5432
+DB_NAME=neondb
+DB_USER=neondb_owner
+DB_PASSWORD=npg_Fjlfx4Y9qXvr
+DB_SSL=true
+
+# ===========================================
+# CLOUDINARY CONFIGURATION
+# ===========================================
+CLOUDINARY_URL=cloudinary://597557396493121:8uzNmDudbHaD7yDb8RG0neeEQXg@djplzmgtn
+CLOUDINARY_CLOUD_NAME=djplzmgtn
+CLOUDINARY_API_KEY=597557396493121
+CLOUDINARY_API_SECRET=8uzNmDudbHaD7yDb8RG0neeEQXg
+CLOUDINARY_UPLOAD_PRESET=promohive_secure
+CLOUDINARY_FOLDER=promohive
+CLOUDINARY_SECURE=true
+
+# ===========================================
+# EMAIL CONFIGURATION (SMTP)
+# ===========================================
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=promohive@globalpromonetwork.store
+SMTP_PASS=PromoHive@2025!
+SMTP_SECURE=true
+SMTP_FROM_NAME=PromoHive Team
+SMTP_FROM_EMAIL=promohive@globalpromonetwork.store
+
+# ===========================================
+# ADGEM INTEGRATION
+# ===========================================
+ADGEM_APP_ID=31283
+ADGEM_SECRET=mjbn5mna31e79eh0al7bmejl
+ADGEM_POSTBACK_URL=https://globalpromonetwork.store/api/adgem/postback
+ADGEM_WEBHOOK_URL=https://globalpromonetwork.store/api/adgem/webhook
+ADGEM_API_URL=https://api.adgem.com
+ADGEM_TIMEOUT=30000
+
+# ===========================================
+# ADSTERRA INTEGRATION
+# ===========================================
+ADSTERRA_API_KEY=9cbc627f2035d7cd2c532e320ff3b0ba
+ADSTERRA_BANNER_ID=27738998
+ADSTERRA_SITE_ID=5346018
+ADSTERRA_API_URL=https://api.adsterra.com
+ADSTERRA_REVENUE_URL=https://globalpromonetwork.store
+ADSTERRA_BANNER_CODE=<script type="text/javascript">atOptions = {'key' : 'd3e9414decc3d72a6de219c8a2aa1f0f','format' : 'iframe','height' : 300,'width' : 160,'params' : {}};</script><script src="//www.highperformanceformat.com/d3e9414decc3d72a6de219c8a2aa1f0f/invoke.js"></script>
+
+# ===========================================
+# CPAlead INTEGRATION
+# ===========================================
+CPALEAD_ADVERTISER_ID=8983bc07-3c30-4a51-afd8-1021cc1d2148
+CPALEAD_PIN=6586
+CPALEAD_POSTBACK_URL=https://globalpromonetwork.store/api/cpalead/postback
+CPALEAD_BLOCK_URL=https://net.go2trck.org/adv_pbk?id=8983bc07-3c30-4a51-afd8-1021cc1d2148&pin=6586&b={PUBLISHER_ID}
+CPALEAD_FAVORITE_URL=https://net.go2trck.org/adv_pbk?id=8983bc07-3c30-4a51-afd8-1021cc1d2148&pin=6586&f={PUBLISHER_ID}
+CPALEAD_API_URL=https://api.cpalead.com
+
+# ===========================================
+# APPLICATION SETTINGS
+# ===========================================
+NEXT_PUBLIC_APP_URL=https://globalpromonetwork.store
+NEXT_PUBLIC_APP_NAME=PromoHive
+NEXT_PUBLIC_APP_DESCRIPTION=Global Promo Network
+NEXT_PUBLIC_APP_VERSION=1.0.0
+NEXT_PUBLIC_MIN_WITHDRAWAL=10
+NEXT_PUBLIC_MAX_WITHDRAWAL=10000
+NEXT_PUBLIC_DEFAULT_CURRENCY=USDT
+NEXT_PUBLIC_SUPPORT_EMAIL=support@globalpromonetwork.store
+
+# ===========================================
+# SECURITY & AUTHENTICATION
+# ===========================================
+NEXTAUTH_SECRET=promohive-super-secret-key-2025-change-this-in-production
+NEXTAUTH_URL=https://globalpromonetwork.store
+JWT_SECRET=promohive-jwt-secret-2025-change-this
+JWT_EXPIRES_IN=7d
+SESSION_SECRET=promohive-session-secret-2025
+ENCRYPTION_KEY=promohive-encryption-key-2025
+
+# ===========================================
+# ADMIN CONFIGURATION
+# ===========================================
+ADMIN_EMAIL=1sanadsa1997@gmil.com
+ADMIN_PASSWORD=PromoHive@Admin2025!
+ADMIN_NAME=Admin User
+ADMIN_PHONE=+1234567890
+ADMIN_ROLE=super_admin
+
+# ===========================================
+# USDT & CRYPTO CONFIGURATION
+# ===========================================
+USDT_NETWORK=TRC-20
+USDT_CONTRACT_ADDRESS=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+USDT_DECIMALS=6
+USDT_SYMBOL=USDT
+WALLET_ADDRESS=TYASrSuUVtHE8MskBsrfL8HAsw5c4bQ2K9
+WALLET_PRIVATE_KEY=your-private-key-here
+WALLET_API_URL=https://api.trongrid.io
+
+# ===========================================
+# PLATFORM SETTINGS
+# ===========================================
+PLATFORM_NAME=PromoHive
+PLATFORM_DESCRIPTION=Global Promo Network
+PLATFORM_VERSION=1.0.0
+PLATFORM_LOGO=https://globalpromonetwork.store/logo.png
+PLATFORM_FAVICON=https://globalpromonetwork.store/favicon.ico
+PLATFORM_THEME=dark
+PLATFORM_LANGUAGE=en
+PLATFORM_TIMEZONE=UTC
+
+# ===========================================
+# LEVEL MULTIPLIERS & REWARDS
+# ===========================================
+LEVEL_0_MULTIPLIER=1.15
+LEVEL_1_MULTIPLIER=1.35
+LEVEL_2_MULTIPLIER=1.55
+LEVEL_3_MULTIPLIER=1.75
+LEVEL_0_NAME=Bronze
+LEVEL_1_NAME=Silver
+LEVEL_2_NAME=Gold
+LEVEL_3_NAME=Platinum
+
+# ===========================================
+# REFERRAL SYSTEM
+# ===========================================
+REFERRAL_L1_REWARD=70
+REFERRAL_L2_REWARD=130
+REFERRAL_L3_REWARD=180
+REFERRAL_MIN_LEVEL=1
+REFERRAL_REQUIRED_UPGRADES=5
+REFERRAL_BONUS_PERCENTAGE=10
+
+# ===========================================
+# BALANCE & WITHDRAWAL LIMITS
+# ===========================================
+LEVEL_0_MAX_BALANCE=9.90
+MIN_WITHDRAWAL=10
+MAX_WITHDRAWAL=10000
+DAILY_WITHDRAWAL_LIMIT=1000
+WITHDRAWAL_FEE_PERCENTAGE=0
+WITHDRAWAL_PROCESSING_TIME=24
+
+# ===========================================
+# ADSTERRA REVENUE DISTRIBUTION
+# ===========================================
+ADSTERRA_BRONZE_PERCENTAGE=10
+ADSTERRA_SILVER_PERCENTAGE=20
+ADSTERRA_GOLD_PERCENTAGE=30
+ADSTERRA_PLATINUM_PERCENTAGE=40
+ADSTERRA_DISTRIBUTION_INTERVAL=daily
+ADSTERRA_MIN_REVENUE=1
+
+# ===========================================
+# TASK CONFIGURATION
+# ===========================================
+TASK_MIN_REWARD=0.01
+TASK_MAX_REWARD=100
+TASK_APPROVAL_REQUIRED=true
+TASK_PROOF_REQUIRED=true
+TASK_AUTO_APPROVE=false
+TASK_TIMEOUT=3600
+
+# ===========================================
+# NOTIFICATION SETTINGS
+# ===========================================
+NOTIFICATION_EMAIL=true
+NOTIFICATION_SMS=false
+NOTIFICATION_PUSH=true
+NOTIFICATION_DISCORD=false
+DISCORD_WEBHOOK_URL=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# ===========================================
+# RATE LIMITING
+# ===========================================
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW=900
+RATE_LIMIT_SKIP_SUCCESS=false
+
+# ===========================================
+# CACHE CONFIGURATION
+# ===========================================
+CACHE_TTL=3600
+CACHE_MAX_SIZE=1000
+CACHE_ENABLED=true
+REDIS_URL=redis://localhost:6379
+
+# ===========================================
+# LOGGING CONFIGURATION
+# ===========================================
+LOG_LEVEL=info
+LOG_FILE=/var/log/promohive.log
+LOG_MAX_SIZE=10MB
+LOG_MAX_FILES=5
+LOG_COMPRESS=true
+
+# ===========================================
+# DEVELOPMENT/PRODUCTION
+# ===========================================
+NODE_ENV=production
+DEBUG=false
+VERBOSE=false
+HOT_RELOAD=false
+SOURCE_MAPS=false
+
+# ===========================================
+# API CONFIGURATION
+# ===========================================
+API_VERSION=v1
+API_RATE_LIMIT=1000
+API_TIMEOUT=30000
+API_CORS_ORIGIN=https://globalpromonetwork.store
+API_CORS_CREDENTIALS=true
+
+# ===========================================
+# FILE UPLOAD CONFIGURATION
+# ===========================================
+MAX_FILE_SIZE=10485760
+ALLOWED_FILE_TYPES=image/jpeg,image/png,image/gif,image/webp
+UPLOAD_PATH=/var/www/promohive/uploads
+TEMP_PATH=/tmp/promohive
+
+# ===========================================
+# BACKUP CONFIGURATION
+# ===========================================
+BACKUP_ENABLED=true
+BACKUP_INTERVAL=daily
+BACKUP_RETENTION=30
+BACKUP_PATH=/var/backups/promohive
+BACKUP_COMPRESS=true
+
+# ===========================================
+# MONITORING CONFIGURATION
+# ===========================================
+MONITORING_ENABLED=true
+HEALTH_CHECK_INTERVAL=300
+METRICS_ENABLED=true
+ALERT_EMAIL=alerts@globalpromonetwork.store
+
+# ===========================================
+# FEATURE FLAGS
+# ===========================================
+FEATURE_REFERRALS=true
+FEATURE_LEVELS=true
+FEATURE_WITHDRAWALS=true
+FEATURE_ADGEM=true
+FEATURE_ADSTERRA=true
+FEATURE_CPALEAD=true
+FEATURE_CLOUDINARY=true
+FEATURE_NOTIFICATIONS=true
+FEATURE_ANALYTICS=true
