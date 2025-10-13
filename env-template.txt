@@ -117,6 +117,7 @@ PLATFORM_FAVICON=https://globalpromonetwork.store/favicon.ico
 PLATFORM_THEME=dark
 PLATFORM_LANGUAGE=en
 PLATFORM_TIMEZONE=UTC
+VITE_DEFAULT_LOCALE=en
 
 # ===========================================
 # LEVEL MULTIPLIERS & REWARDS

@@ -10,6 +10,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import EmailVerification from "./pages/EmailVerification";
 import TasksManager from "./pages/admin/TasksManager";
 import UsersManager from "./pages/admin/UsersManager";
 import UpgradeRequests from "./pages/admin/UpgradeRequests";
@@ -27,6 +30,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/tasks" element={<TasksManager />} />

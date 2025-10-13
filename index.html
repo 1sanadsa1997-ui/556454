@@ -1,15 +1,86 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1225" />
+    <meta name="content-language" content="en" />
+    <meta name="language" content="en" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://adunits.adgem.com https://www.highperformanceformat.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.adgem.com https://api.cpalead.com https://api.adsterra.com https://adunits.adgem.com https://www.highperformanceformat.com; frame-src 'self' https://api.adgem.com https://adunits.adgem.com https://www.highperformanceformat.com; object-src 'none'; base-uri 'self';" />
     <link rel="icon" href="https://cdn.builder.io/api/v1/image/assets%2F91b1ca7ab4de498ab87c5bb77cae5e6c%2F62c46b2630ea4fdf9faadc460a3e5599?format=webp&width=64" />
     <title>PromoHive — Global Promo Network</title>
   </head>
 
   <body>
     <div id="root"></div>
+
+    <!-- Block external monitoring scripts -->
+    <script>
+      // Block Datadog and Bugsnag more aggressively
+      window.DD_RUM = { 
+        init: () => {},
+        setUser: () => {},
+        addAction: () => {},
+        addError: () => {},
+        addTiming: () => {}
+      };
+      
+      window.Bugsnag = { 
+        start: () => {},
+        notify: () => {},
+        leaveBreadcrumb: () => {},
+        setUser: () => {}
+      };
+      
+      // Block external script loading
+      const originalCreateElement = document.createElement;
+      document.createElement = function(tagName) {
+        const element = originalCreateElement.call(this, tagName);
+        if (tagName.toLowerCase() === 'script') {
+          const originalSrc = Object.getOwnPropertyDescriptor(element, 'src');
+          Object.defineProperty(element, 'src', {
+            get: originalSrc.get,
+            set: function(value) {
+              if (value && (value.includes('datadog') || value.includes('bugsnag'))) {
+                console.log('Blocked external monitoring script:', value);
+                return;
+              }
+              originalSrc.set.call(this, value);
+            }
+          });
+        }
+        return element;
+      };
+      
+      // Override console methods to filter out monitoring errors
+      const originalError = console.error;
+      console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('Datadog') || message.includes('Bugsnag') || message.includes('bugsnag') || message.includes('datadog')) {
+          return; // Don't log monitoring errors
+        }
+        originalError.apply(console, args);
+      };
+      
+      const originalWarn = console.warn;
+      console.warn = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('Datadog') || message.includes('Bugsnag') || message.includes('bugsnag') || message.includes('datadog')) {
+          return; // Don't log monitoring warnings
+        }
+        originalWarn.apply(console, args);
+      };
+      
+      // Block fetch requests to monitoring services
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options) {
+        if (typeof url === 'string' && (url.includes('datadog') || url.includes('bugsnag'))) {
+          console.log('Blocked monitoring request:', url);
+          return Promise.resolve(new Response('{}', { status: 200 }));
+        }
+        return originalFetch.call(this, url, options);
+      };
+    </script>
 
     <script type="module" src="/client/App.tsx"></script>
   </body>

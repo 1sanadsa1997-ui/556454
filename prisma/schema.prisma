@@ -9,13 +9,21 @@ datasource db {
 
 model User {
   id                 String   @id @default(cuid())
+  firstName          String
+  lastName           String
+  username           String   @unique
   email              String   @unique
+  password           String
+  gender             String
+  birthDate          DateTime
+  country            String
   role               Role     @default(USER)
   level              Int      @default(0)
   hivePoints         Int      @default(0) // stored as points (1 USD = 100 points)
   referralPayouts    Int      @default(0) // number of referral payouts already granted (groups of 5)
   overrideUnlock     Boolean  @default(false) // admin override for level 0 cap
   suspended          Boolean  @default(false)
+  emailVerified      Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   tasks              Task[]   @relation("userTasks")

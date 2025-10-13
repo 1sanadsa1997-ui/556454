@@ -38,7 +38,7 @@ export default function Index() {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-extrabold tracking-tight text-white"
             >
-              أطلق العنان لإمكاناتك: اربح HivePoints من خلال المهام والعروض والإحالات
+              Unlock Your Potential: Earn HivePoints Through Tasks, Offers & Referrals
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -46,7 +46,7 @@ export default function Index() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-5 text-white/80 text-lg"
             >
-              PromoHive هي شبكة ترويج متميزة حيث يمكنك تحويل وقتك إلى أرباح حقيقية. أكمل المهام اليدوية، واستفد من عروض AdGem المربحة، واكتشف فرصًا جديدة. انضم إلينا اليوم وابدأ رحلة الربح السهلة والآمنة.
+              PromoHive is a premium promotional network where you can turn your time into real earnings. Complete manual tasks, benefit from lucrative AdGem offers, and discover new opportunities. Join us today and start your easy and secure earning journey.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -55,16 +55,19 @@ export default function Index() {
               className="mt-8 flex flex-wrap gap-3"
             >
               <Button asChild className="bg-gradient-to-r from-sky-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/20 hover:from-sky-600 hover:to-fuchsia-600 transition-all duration-300">
-                <Link to="/dashboard">ابدأ الربح الآن</Link>
+                <Link to="/register">Create Account</Link>
               </Button>
               <Button variant="secondary" asChild className="hover:bg-white/10 transition-all duration-300">
-                <a href="#how">كيف تعمل؟</a>
+                <Link to="/login">Sign In</Link>
+              </Button>
+              <Button variant="outline" asChild className="hover:bg-white/10 transition-all duration-300">
+                <a href="#how">How it works?</a>
               </Button>
             </motion.div>
             <div className="mt-10 grid grid-cols-3 gap-4">
-              <Stat label="مستخدمين سعداء" value="12,450+" />
-              <Stat label="مهام مكتملة" value="318k" />
-              <Stat label="مدفوعات" value="$410k+" />
+              <Stat label="Happy Users" value="12,450+" />
+              <Stat label="Tasks Completed" value="318k" />
+              <Stat label="Payments" value="$410k+" />
             </div>
           </div>
           <div className="relative">
@@ -76,8 +79,8 @@ export default function Index() {
             >
               <img src={logoUrl} alt="PromoHive logo" className="mx-auto h-40 w-40" />
               <div className="mt-6 space-y-2 text-center">
-                <p className="text-sm text-white/70">1 دولار أمريكي = 100 HivePoints</p>
-                <p className="text-sm text-white/70">المدفوعات بعملة USDT • الحد الأدنى 10 دولارات</p>
+                <p className="text-sm text-white/70">1 USD = 100 HivePoints</p>
+                <p className="text-sm text-white/70">USDT Payments • Minimum $10</p>
               </div>
             </motion.div>
           </div>
@@ -86,7 +89,7 @@ export default function Index() {
 
       <section id="how" className="py-16">
         <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white text-center mb-10">
-          كيف يعمل PromoHive؟
+          How does PromoHive work?
         </h2>
         <div className="grid gap-6 md:grid-cols-3">
           <motion.div
@@ -96,8 +99,8 @@ export default function Index() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10"
           >
-            <h3 className="font-semibold text-white">1. سجل الدخول بسهولة</h3>
-            <p className="mt-2 text-sm text-white/70">تسجيل دخول سريع وآمن عبر رابط سحري يصل إلى بريدك الإلكتروني. لا توجد كلمات مرور معقدة، فقط وصول فوري.</p>
+            <h3 className="font-semibold text-white">1. Easy Sign Up</h3>
+            <p className="mt-2 text-sm text-white/70">Quick and secure registration with email verification. No complex passwords, just instant access.</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -106,8 +109,8 @@ export default function Index() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10"
           >
-            <h3 className="font-semibold text-white">2. اربح HivePoints</h3>
-            <p className="mt-2 text-sm text-white/70">أكمل مهام بسيطة، واستفد من عروض AdGem، وشاهد الإعلانات المنسقة. كلما ارتفع مستواك، زادت نقاطك!</p>
+            <h3 className="font-semibold text-white">2. Earn HivePoints</h3>
+            <p className="mt-2 text-sm text-white/70">Complete simple tasks, benefit from AdGem offers, and watch curated ads. The higher your level, the more points you earn!</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -116,28 +119,28 @@ export default function Index() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10"
           >
-            <h3 className="font-semibold text-white">3. اسحب أرباحك</h3>
-            <p className="mt-2 text-sm text-white/70">اطلب سحب أرباحك بعملة USDT بمجرد وصولك إلى 10 دولارات. عملية سحب سريعة وموثوقة.</p>
+            <h3 className="font-semibold text-white">3. Withdraw Earnings</h3>
+            <p className="mt-2 text-sm text-white/70">Request withdrawal in USDT once you reach $10. Fast and reliable withdrawal process.</p>
           </motion.div>
         </div>
       </section>
 
       <section className="py-16">
         <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white text-center mb-10">
-          ماذا يقول مستخدمونا؟
+          What our users say?
         </h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Testimonial
-            quote="PromoHive غيرت طريقة ربحي عبر الإنترنت. المهام سهلة وممتعة، والمدفوعات سريعة وموثوقة!"
-            author="أحمد م. - مستخدم نشط"
+            quote="PromoHive changed how I earn online. Tasks are easy and fun, payments are fast and reliable!"
+            author="Ahmed M. - Active User"
           />
           <Testimonial
-            quote="لم أصدق مدى سهولة البدء والربح. الواجهة رائعة والدعم ممتاز. أوصي به بشدة!"
-            author="فاطمة ح. - عضو جديد"
+            quote="I couldn't believe how easy it was to start earning. Great interface and excellent support. Highly recommended!"
+            author="Fatima H. - New Member"
           />
           <Testimonial
-            quote="نظام الإحالة مذهل! لقد كسبت مكافآت كبيرة بمجرد دعوة أصدقائي. أفضل شبكة ترويج على الإطلاق."
-            author="خالد س. - محيل ذهبي"
+            quote="The referral system is amazing! I earned big rewards just by inviting friends. Best promotional network ever."
+            author="Khalid S. - Gold Referrer"
           />
         </div>
       </section>
@@ -150,7 +153,7 @@ export default function Index() {
           transition={{ duration: 0.5 }}
           className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6"
         >
-          جاهز للانضمام إلى مجتمع PromoHive؟
+          Ready to join the PromoHive community?
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -159,7 +162,7 @@ export default function Index() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg text-white/80 mb-8"
         >
-          لا تفوت فرصة تحويل وقتك إلى أرباح. انضم إلى آلاف المستخدمين الراضين اليوم!
+          Don't miss the opportunity to turn your time into earnings. Join thousands of satisfied users today!
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -168,7 +171,7 @@ export default function Index() {
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <Button asChild className="bg-gradient-to-r from-sky-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/20 hover:from-sky-600 hover:to-fuchsia-600 transition-all duration-300 text-xl px-8 py-4">
-            <Link to="/dashboard">ابدأ رحلة الربح الآن!</Link>
+            <Link to="/register">Start Your Earning Journey Now!</Link>
           </Button>
         </motion.div>
       </section>

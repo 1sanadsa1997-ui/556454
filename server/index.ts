@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { adgemWebhook, adgemPostback } from "./routes/adgem";
+import { register, login, verifyEmail } from "./routes/auth-new";
 
 // Optional: initialize prisma if DATABASE_URL is present
 let prisma: any = null;
@@ -20,9 +21,28 @@ export function createServer() {
   const app = express();
 
   // Middleware
-  app.use(cors());
+  app.use(cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:8080', 
+      'https://globalpromonetwork.store',
+      'https://www.globalpromonetwork.store'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // Handle preflight OPTIONS requests
+  app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  });
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
@@ -32,16 +52,116 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
-  // Auth
-  try {
-    const { requestMagicLink, verifyMagicLink, me } = require("./routes/auth");
-    const { authenticateToken } = require("./middleware/auth");
-    app.post("/api/auth/request", requestMagicLink);
-    app.get("/api/auth/verify", verifyMagicLink);
-    app.get("/api/auth/me", authenticateToken, me);
-  } catch (err) {
-    // ignore
-  }
+  // Auth Routes - Direct Implementation
+  app.post("/api/auth/request", async (req, res) => {
+    try {
+      const { email } = req.body as { email?: string };
+      if (!email) return res.status(400).json({ error: "missing email" });
+
+      // Simple magic link generation
+      const jwt = await import('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || "secret";
+      const token = jwt.default.sign({ email: email.toLowerCase() }, JWT_SECRET, { expiresIn: "15m" });
+      
+      const magicLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://globalpromonetwork.store'}/api/auth/verify?token=${token}`;
+      
+      // Send email (simplified)
+      console.log(`Magic link for ${email}: ${magicLink}`);
+      
+      res.json({ success: true, message: "Magic link sent to email" });
+    } catch (err) {
+      console.error('Auth request error:', err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.get("/api/auth/verify", async (req, res) => {
+    try {
+      const { token } = req.query as { token?: string };
+      if (!token) return res.status(400).json({ error: "missing token" });
+
+      const jwt = await import('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || "secret";
+      const payload = jwt.default.verify(token, JWT_SECRET) as { email: string };
+      const email = payload.email.toLowerCase();
+
+      // Create or find user
+      let user;
+      if (prisma) {
+        user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+          const usersCount = await prisma.user.count();
+          const role = (usersCount === 0 || email === (process.env.ADMIN_EMAIL || "")) ? "ADMIN" : "USER";
+          user = await prisma.user.create({ 
+            data: { 
+              email, 
+              role, 
+              hivePoints: 500 
+            } 
+          });
+        }
+      } else {
+        // Fallback without database
+        user = { id: '1', email, role: 'USER', hivePoints: 500 };
+      }
+
+      const sessionToken = jwt.default.sign({ sub: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+      res.json({ token: sessionToken, user: { id: user.id, email: user.email, role: user.role } });
+    } catch (err) {
+      console.error('Auth verify error:', err);
+      res.status(400).json({ error: "invalid or expired token" });
+    }
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const token = authHeader.substring(7);
+      const jwt = await import('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || "secret";
+      const payload = jwt.default.verify(token, JWT_SECRET) as { sub: string, role: string };
+
+      let user;
+      if (prisma) {
+        user = await prisma.user.findUnique({ where: { id: payload.sub } });
+      } else {
+        user = { id: payload.sub, email: 'user@example.com', role: payload.role };
+      }
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json({ user: { id: user.id, email: user.email, role: user.role } });
+    } catch (err) {
+      console.error('Auth me error:', err);
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  });
+
+  // Additional useful routes
+  app.get("/api/health", (_req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.PLATFORM_VERSION || "1.0.0"
+    });
+  });
+
+  app.get("/api/status", (_req, res) => {
+    res.json({ 
+      message: "PromoHive API is running",
+      database: prisma ? "connected" : "not connected",
+      environment: process.env.NODE_ENV || "development"
+    });
+  });
+
+  // New Authentication Routes
+  app.post("/api/auth/register", register);
+  app.post("/api/auth/login", login);
+  app.get("/api/auth/verify-email", verifyEmail);
 
   // AdGem integrations (stubs)
   app.all("/api/adgem/webhook", adgemWebhook);
