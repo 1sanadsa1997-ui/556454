@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 interface EmailOptions {
   to: string;
@@ -6,48 +6,46 @@ interface EmailOptions {
   html: string;
 }
 
-// Create transporter
-const createTransporter = () => {
-  return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST || 'smtp.hostinger.com',
-    port: parseInt(process.env.SMTP_PORT || '465'),
-    secure: true,
+function requiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is not configured`);
+  return value;
+}
+
+function createTransporter() {
+  const port = Number(process.env.SMTP_PORT ?? "465");
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("SMTP_PORT must be a valid TCP port");
+  }
+
+  return nodemailer.createTransport({
+    host: requiredEnv("SMTP_HOST"),
+    port,
+    secure: port === 465,
     auth: {
-      user: process.env.SMTP_USER || 'promohive@globalpromonetwork.store',
-      pass: process.env.SMTP_PASS || 'PromoHive@2025!'
-    }
+      user: requiredEnv("SMTP_USER"),
+      pass: requiredEnv("SMTP_PASS"),
+    },
+  });
+}
+
+export const sendEmail = async (options: EmailOptions): Promise<void> => {
+  const fromEmail = requiredEnv("SMTP_FROM_EMAIL");
+  const fromName = process.env.SMTP_FROM_NAME?.trim() || "PromoHive Team";
+  await createTransporter().sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
   });
 };
 
-// Send email function
-export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"${process.env.SMTP_FROM_NAME || 'PromoHive Team'}" <${process.env.SMTP_FROM_EMAIL || 'promohive@globalpromonetwork.store'}>`,
-      to: options.to,
-      subject: options.subject,
-      html: options.html
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
-  } catch (error) {
-    console.error('Email sending failed:', error);
-    throw new Error('Failed to send email');
-  }
-};
-
-// Test email configuration
 export const testEmailConfig = async (): Promise<boolean> => {
   try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    console.log('Email configuration is valid');
+    await createTransporter().verify();
     return true;
   } catch (error) {
-    console.error('Email configuration test failed:', error);
+    console.error("Email configuration test failed:", error);
     return false;
   }
 };
