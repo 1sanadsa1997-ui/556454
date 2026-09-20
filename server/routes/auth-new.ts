@@ -1,237 +1,145 @@
 import { RequestHandler } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import prisma from "../prisma";
 import { sendEmail } from "../lib/email";
 
-const prisma = new PrismaClient();
+const VERIFICATION_AGE_SECONDS = 24 * 60 * 60;
+const JWT_ISSUER = "promohive";
+const JWT_AUDIENCE = "promohive-email-verification";
 
-interface RegisterData {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  password: string;
-  gender: string;
-  birthDate: string;
-  country: string;
+type RegisterBody = {
+  firstName?: unknown;
+  lastName?: unknown;
+  username?: unknown;
+  email?: unknown;
+  password?: unknown;
+  gender?: unknown;
+  birthDate?: unknown;
+  country?: unknown;
+};
+
+function jwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (!secret || secret.length < 32) {
+    throw new Error("JWT_SECRET must be configured and at least 32 characters long");
+  }
+  return secret;
 }
 
-interface LoginData {
-  username: string;
-  password: string;
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
-// Register new user
+function ageAtLeast(date: Date, years: number): boolean {
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate());
+  return date <= cutoff;
+}
+
+function validateRegistration(body: RegisterBody) {
+  const firstName = text(body.firstName);
+  const lastName = text(body.lastName);
+  const username = text(body.username).toLowerCase();
+  const email = text(body.email).toLowerCase();
+  const password = typeof body.password === "string" ? body.password : "";
+  const gender = text(body.gender).toLowerCase();
+  const country = text(body.country);
+  const birthDateText = text(body.birthDate);
+
+  if (!firstName || !lastName || !username || !email || !password || !gender || !birthDateText || !country) {
+    return { error: "First name, last name, username, email, password, gender, birth date, and country are required" };
+  }
+  if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+    return { error: "Username must be 3-30 characters and contain only letters, numbers, or underscores" };
+  }
+  if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) return { error: "Email is invalid" };
+  if (password.length < 8 || password.length > 72) return { error: "Password must be 8-72 characters" };
+  if (!["male", "female", "other"].includes(gender)) return { error: "Gender is invalid" };
+
+  const birthDate = new Date(`${birthDateText}T00:00:00.000Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDateText) || Number.isNaN(birthDate.getTime()) || !ageAtLeast(birthDate, 13)) {
+    return { error: "You must be at least 13 years old" };
+  }
+  if (birthDate > new Date()) return { error: "Birth date cannot be in the future" };
+
+  return { value: { firstName, lastName, username, email, password, gender, country, birthDate } };
+}
+
 export const register: RequestHandler = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      username,
-      email,
-      password,
-      gender,
-      birthDate,
-      country
-    }: RegisterData = req.body;
+    const parsed = validateRegistration(req.body as RegisterBody);
+    if ("error" in parsed) return res.status(400).json({ error: parsed.error });
+    const { firstName, lastName, username, email, password, gender, country, birthDate } = parsed.value;
 
-    // Validate required fields
-    if (!firstName || !lastName || !username || !email || !password || !gender || !birthDate || !country) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: email.toLowerCase() },
-          { username: username.toLowerCase() }
-        ]
+    const passwordHash = await bcrypt.hash(password, 12);
+    // PostgreSQL transaction advisory lock serializes the first-user decision.
+    // This prevents two concurrent registrations from both becoming ADMIN.
+    const user = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext('promohive:first-user'))`);
+      const existing = await tx.user.findFirst({ where: { OR: [{ email }, { username }] }, select: { email: true, username: true } });
+      if (existing) {
+        throw new Error(existing.email === email ? "Email already registered" : "Username already taken");
       }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ 
-        error: existingUser.email === email.toLowerCase() 
-          ? "Email already registered" 
-          : "Username already taken" 
+      const isFirstUser = (await tx.user.count()) === 0;
+      return tx.user.create({
+        data: {
+          firstName, lastName, username, email, password: passwordHash, gender, birthDate, country,
+          role: isFirstUser ? "ADMIN" : "USER", hivePoints: 500,
+        },
       });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        username: username.toLowerCase(),
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        gender,
-        birthDate: new Date(birthDate),
-        country,
-        role: 'USER',
-        level: 0,
-        hivePoints: 500, // Welcome bonus
-        emailVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
     });
 
-    // Generate email verification token
-    const verificationToken = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "24h" }
-    );
-
-    // Send verification email
-    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://globalpromonetwork.store'}/verify-email?token=${verificationToken}`;
-    
+    const token = jwt.sign({ sub: user.id, email: user.email, purpose: "email-verification" }, jwtSecret(), {
+      expiresIn: VERIFICATION_AGE_SECONDS,
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) throw new Error("APP_URL is not configured");
     await sendEmail({
       to: user.email,
       subject: "Verify Your PromoHive Account",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Welcome to PromoHive!</h2>
-          <p>Hi ${user.firstName},</p>
-          <p>Thank you for registering with PromoHive. Please click the button below to verify your email address:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
-          </div>
-          <p>If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #666;">${verificationLink}</p>
-          <p>This link will expire in 24 hours.</p>
-          <p>Best regards,<br>The PromoHive Team</p>
-        </div>
-      `
+      html: `<p>Hi ${user.firstName.replace(/[<>&\"']/g, "")},</p><p><a href="${appUrl}/verify-email?token=${encodeURIComponent(token)}">Verify your email</a></p><p>This link expires in 24 hours.</p>`,
     });
-
-    res.json({
-      success: true,
-      message: "Account created successfully. Please check your email for verification link.",
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
+    return res.status(201).json({ success: true, message: "Account created successfully. Please check your email for verification link." });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: "Internal server error" });
+    if (error instanceof Error && /already registered|already taken/.test(error.message)) return res.status(409).json({ error: error.message });
+    if ((error as Prisma.PrismaClientKnownRequestError)?.code === "P2002") return res.status(409).json({ error: "Email or username already registered" });
+    console.error("Registration error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Login user
 export const login: RequestHandler = async (req, res) => {
   try {
-    const { username, password }: LoginData = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
-    }
-
-    // Find user by username or email
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: username.toLowerCase() },
-          { email: username.toLowerCase() }
-        ]
-      }
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Check if email is verified
-    if (!user.emailVerified) {
-      return res.status(401).json({ error: "Please verify your email before logging in" });
-    }
-
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        sub: user.id, 
-        role: user.role,
-        username: user.username 
-      },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "7d" }
-    );
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        level: user.level,
-        hivePoints: user.hivePoints
-      }
-    });
-
+    const usernameOrEmail = text(req.body?.username).toLowerCase();
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    if (!usernameOrEmail || !password) return res.status(400).json({ error: "Username and password are required" });
+    const user = await prisma.user.findFirst({ where: { OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }] } });
+    if (!user || !await bcrypt.compare(password, user.password)) return res.status(401).json({ error: "Invalid credentials" });
+    if (!user.emailVerified) return res.status(401).json({ error: "Please verify your email before logging in" });
+    const token = jwt.sign({ sub: user.id, role: user.role, username: user.username }, jwtSecret(), { expiresIn: "7d", issuer: JWT_ISSUER });
+    return res.json({ success: true, token, user: { id: user.id, firstName: user.firstName, lastName: user.lastName, username: user.username, email: user.email, role: user.role, level: user.level, hivePoints: user.hivePoints } });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Login error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Verify email
 export const verifyEmail: RequestHandler = async (req, res) => {
   try {
-    const { token } = req.query;
-
-    if (!token) {
-      return res.status(400).json({ error: "Verification token is required" });
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token as string, process.env.JWT_SECRET || "secret") as any;
-    
-    // Update user email verification status
-    const user = await prisma.user.update({
-      where: { id: decoded.userId },
-      data: { 
-        emailVerified: true,
-        updatedAt: new Date()
-      }
-    });
-
-    res.json({
-      success: true,
-      message: "Email verified successfully",
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-
+    const token = text(req.query.token);
+    if (!token) return res.status(400).json({ error: "Verification token is required" });
+    const decoded = jwt.verify(token, jwtSecret(), { issuer: JWT_ISSUER, audience: JWT_AUDIENCE }) as JwtPayload;
+    if (decoded.purpose !== "email-verification" || typeof decoded.sub !== "string" || typeof decoded.email !== "string") throw new Error("invalid token claims");
+    const user = await prisma.user.findUnique({ where: { id: decoded.sub } });
+    if (!user || user.email !== decoded.email) throw new Error("invalid token subject");
+    await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
+    return res.json({ success: true, message: "Email verified successfully" });
   } catch (error) {
-    console.error('Email verification error:', error);
-    res.status(400).json({ error: "Invalid or expired verification token" });
+    console.error("Email verification error:", error);
+    return res.status(400).json({ error: "Invalid or expired verification token" });
   }
 };
