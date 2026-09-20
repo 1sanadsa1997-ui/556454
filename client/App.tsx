@@ -1,25 +1,27 @@
 import "./global.css";
 
 import { Toaster } from "@/components/ui/toaster";
-import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import Admin from "./pages/Admin";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import EmailVerification from "./pages/EmailVerification";
-import TasksManager from "./pages/admin/TasksManager";
-import UsersManager from "./pages/admin/UsersManager";
-import UpgradeRequests from "./pages/admin/UpgradeRequests";
-import WalletLogs from "./pages/admin/WalletLogs";
 import { AuthProvider } from "@/hooks/auth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { createRoot } from "react-dom/client";
+
+import Admin from "./pages/Admin";
+import Dashboard from "./pages/Dashboard";
+import EmailVerification from "./pages/EmailVerification";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import Register from "./pages/Register";
+import TasksManager from "./pages/admin/TasksManager";
+import UpgradeRequests from "./pages/admin/UpgradeRequests";
+import UsersManager from "./pages/admin/UsersManager";
+import WalletLogs from "./pages/admin/WalletLogs";
 
 const queryClient = new QueryClient();
+const routerFuture = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -27,7 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter future={routerFuture}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -39,7 +41,6 @@ const App = () => (
             <Route path="/admin/users" element={<UsersManager />} />
             <Route path="/admin/upgrade-requests" element={<UpgradeRequests />} />
             <Route path="/admin/wallet-logs" element={<WalletLogs />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
